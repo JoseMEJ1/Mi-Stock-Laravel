@@ -1,7 +1,7 @@
 FROM php:8.2-fpm-alpine
 
 # ============================================================
-# INSTALAR DEPENDENCIAS DEL SISTEMA
+# INSTALAR DEPENDENCIAS DEL SISTEMA (CON LIBZIP-DEV)
 # ============================================================
 
 RUN apk add --no-cache \
@@ -31,13 +31,7 @@ RUN apk add --no-cache \
     libzip-dev
 
 # ============================================================
-# INSTALAR ZIP DESDE APK CON NOMBRE CORRECTO
-# ============================================================
-
-RUN apk add --no-cache php8.2-zip
-
-# ============================================================
-# INSTALAR EXTENSIONES (EXCLUYENDO ZIP)
+# INSTALAR EXTENSIONES (INCLUYENDO ZIP COMPILADO)
 # ============================================================
 
 RUN docker-php-ext-install -j$(nproc) \
@@ -53,13 +47,14 @@ RUN docker-php-ext-install -j$(nproc) \
     session \
     simplexml \
     xml \
-    xmlwriter
+    xmlwriter \
+    zip
 
 # ============================================================
-# HABILITAR EXTENSIONES (TOKENIZER, ICONV, ZIP)
+# HABILITAR TOKENIZER E ICONV
 # ============================================================
 
-RUN docker-php-ext-enable tokenizer iconv zip
+RUN docker-php-ext-enable tokenizer iconv
 
 # ============================================================
 # INSTALAR MONGODB
@@ -73,39 +68,11 @@ RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# ============================================================
-# CONFIGURAR DIRECTORIO
-# ============================================================
-
 WORKDIR /var/www
-
-# ============================================================
-# COPIAR ARCHIVOS DEL PROYECTO
-# ============================================================
-
 COPY . .
-
-# Verificar que composer.json existe
-RUN test -f composer.json || (echo "ERROR: composer.json not found" && exit 1)
-
-# Instalar dependencias
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# ============================================================
-# CONFIGURAR PERMISOS
-# ============================================================
-
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-
-# ============================================================
-# EXPONER PUERTO
-# ============================================================
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 10000
-
-# ============================================================
-# COMANDO DE INICIO
-# ============================================================
-
 CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000"]
