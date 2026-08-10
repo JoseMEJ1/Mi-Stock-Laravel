@@ -30,15 +30,7 @@ RUN apk add --no-cache \
     curl-dev
 
 # ============================================================
-# INSTALAR TOKENIZER Y ICONV DESDE APK (CON NOMBRE CORRECTO)
-# ============================================================
-
-RUN apk add --no-cache \
-    php8.2-tokenizer \
-    php8.2-iconv
-
-# ============================================================
-# INSTALAR EL RESTO DE EXTENSIONES DESDE FUENTE PHP
+# INSTALAR EXTENSIONES (NO INCLUIR TOKENIZER NI ICONV)
 # ============================================================
 
 RUN docker-php-ext-install -j$(nproc) \
@@ -58,6 +50,12 @@ RUN docker-php-ext-install -j$(nproc) \
     zip
 
 # ============================================================
+# HABILITAR EXTENSIONES QUE YA VIENEN INSTALADAS
+# ============================================================
+
+RUN docker-php-ext-enable tokenizer iconv
+
+# ============================================================
 # INSTALAR MONGODB
 # ============================================================
 
@@ -69,39 +67,11 @@ RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# ============================================================
-# CONFIGURAR DIRECTORIO
-# ============================================================
-
 WORKDIR /var/www
-
-# ============================================================
-# COPIAR ARCHIVOS DEL PROYECTO
-# ============================================================
-
 COPY . .
-
-# Verificar que composer.json existe
-RUN test -f composer.json || (echo "ERROR: composer.json not found" && exit 1)
-
-# Instalar dependencias
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# ============================================================
-# CONFIGURAR PERMISOS
-# ============================================================
-
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-
-# ============================================================
-# EXPONER PUERTO
-# ============================================================
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 10000
-
-# ============================================================
-# COMANDO DE INICIO
-# ============================================================
-
 CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000"]
