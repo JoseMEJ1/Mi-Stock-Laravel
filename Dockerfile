@@ -1,7 +1,7 @@
 FROM php:8.2-fpm-alpine
 
 # ============================================================
-# INSTALAR DEPENDENCIAS DEL SISTEMA (SIN LIBICONV)
+# INSTALAR DEPENDENCIAS DEL SISTEMA
 # ============================================================
 
 RUN apk add --no-cache \
@@ -27,10 +27,11 @@ RUN apk add --no-cache \
     icu-dev \
     libxml2-dev \
     oniguruma-dev \
-    curl-dev
+    curl-dev \
+    gettext-dev
 
 # ============================================================
-# INSTALAR TODAS LAS EXTENSIONES PHP
+# INSTALAR EXTENSIONES (EXCLUYENDO ICONV)
 # ============================================================
 
 RUN docker-php-ext-install -j$(nproc) \
@@ -41,7 +42,6 @@ RUN docker-php-ext-install -j$(nproc) \
     fileinfo \
     filter \
     gd \
-    iconv \
     intl \
     mbstring \
     session \
@@ -50,6 +50,16 @@ RUN docker-php-ext-install -j$(nproc) \
     xml \
     xmlwriter \
     zip
+
+# ============================================================
+# INSTALAR ICONV CON CONFIGURACIÓN ESPECIAL PARA MUSL
+# ============================================================
+
+# Configurar iconv para usar la implementación de musl
+RUN set -ex \
+    && rm -f /usr/local/etc/php/conf.d/*iconv* \
+    && docker-php-ext-configure iconv \
+    && docker-php-ext-install iconv
 
 # ============================================================
 # INSTALAR MONGODB
