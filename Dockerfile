@@ -28,8 +28,8 @@ RUN apk add --no-cache \
     libxml2-dev \
     oniguruma-dev \
     curl-dev \
-    libzip-dev \
-    libiconv
+    libzip-dev
+# libiconv NO se instala, ya viene incluido en Alpine
 
 # ============================================================
 # PASO 2: INSTALAR EXTENSIONES PHP (COMPILACIÓN)
