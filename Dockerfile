@@ -1,7 +1,7 @@
 FROM php:8.2-fpm-alpine
 
 # ============================================================
-# INSTALAR DEPENDENCIAS DEL SISTEMA
+# INSTALAR DEPENDENCIAS DEL SISTEMA (INCLUYENDO LIBZIP)
 # ============================================================
 
 RUN apk add --no-cache \
@@ -27,10 +27,11 @@ RUN apk add --no-cache \
     icu-dev \
     libxml2-dev \
     oniguruma-dev \
-    curl-dev
+    curl-dev \
+    libzip-dev
 
 # ============================================================
-# INSTALAR EXTENSIONES (NO INCLUIR TOKENIZER NI ICONV)
+# INSTALAR EXTENSIONES
 # ============================================================
 
 RUN docker-php-ext-install -j$(nproc) \
@@ -50,7 +51,7 @@ RUN docker-php-ext-install -j$(nproc) \
     zip
 
 # ============================================================
-# HABILITAR EXTENSIONES QUE YA VIENEN INSTALADAS
+# HABILITAR TOKENIZER E ICONV (YA VIENEN INSTALADOS)
 # ============================================================
 
 RUN docker-php-ext-enable tokenizer iconv
@@ -67,11 +68,39 @@ RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# ============================================================
+# CONFIGURAR DIRECTORIO
+# ============================================================
+
 WORKDIR /var/www
+
+# ============================================================
+# COPIAR ARCHIVOS DEL PROYECTO
+# ============================================================
+
 COPY . .
+
+# Verificar que composer.json existe
+RUN test -f composer.json || (echo "ERROR: composer.json not found" && exit 1)
+
+# Instalar dependencias
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
-RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# ============================================================
+# CONFIGURAR PERMISOS
+# ============================================================
+
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# ============================================================
+# EXPONER PUERTO
+# ============================================================
 
 EXPOSE 10000
+
+# ============================================================
+# COMANDO DE INICIO
+# ============================================================
+
 CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000"]
