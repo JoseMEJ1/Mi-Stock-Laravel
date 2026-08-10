@@ -1,66 +1,31 @@
 FROM php:8.2-fpm-alpine
 
 # ============================================================
-# INSTALAR DEPENDENCIAS DEL SISTEMA (CON LIBZIP-DEV)
+# INSTALAR PHP Y EXTENSIONES DESDE APK (MÁS RÁPIDO)
 # ============================================================
 
 RUN apk add --no-cache \
-    bash \
-    curl \
-    git \
-    unzip \
-    zip \
-    autoconf \
-    build-base \
-    g++ \
-    gcc \
-    libc-dev \
-    make \
-    openssl-dev \
-    pkgconfig \
-    libssl3 \
-    openssl \
-    freetype-dev \
-    libjpeg-turbo-dev \
-    libpng-dev \
-    libwebp-dev \
-    icu-dev \
-    libxml2-dev \
-    oniguruma-dev \
-    curl-dev \
-    libzip-dev
+    php8.2 \
+    php8.2-bcmath \
+    php8.2-ctype \
+    php8.2-curl \
+    php8.2-dom \
+    php8.2-fileinfo \
+    php8.2-filter \
+    php8.2-gd \
+    php8.2-iconv \
+    php8.2-intl \
+    php8.2-mbstring \
+    php8.2-session \
+    php8.2-simplexml \
+    php8.2-tokenizer \
+    php8.2-xml \
+    php8.2-xmlwriter \
+    php8.2-pecl-mongodb \
+    php8.2-phar \
+    php8.2-openssl
 
-# ============================================================
-# INSTALAR EXTENSIONES (INCLUYENDO ZIP COMPILADO)
-# ============================================================
-
-RUN docker-php-ext-install -j$(nproc) \
-    bcmath \
-    ctype \
-    curl \
-    dom \
-    fileinfo \
-    filter \
-    gd \
-    intl \
-    mbstring \
-    session \
-    simplexml \
-    xml \
-    xmlwriter \
-    zip
-
-# ============================================================
-# HABILITAR TOKENIZER E ICONV
-# ============================================================
-
-RUN docker-php-ext-enable tokenizer iconv
-
-# ============================================================
-# INSTALAR MONGODB
-# ============================================================
-
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+# NOTA: zip ya viene incluido en php8.2 base
 
 # ============================================================
 # INSTALAR COMPOSER
