@@ -30,16 +30,15 @@ RUN apk add --no-cache \
     curl-dev
 
 # ============================================================
-# INSTALAR EXTENSIONES PHP DESDE EL REPOSITORIO DE APK
+# INSTALAR TOKENIZER Y ICONV DESDE APK (CON NOMBRE CORRECTO)
 # ============================================================
 
-# Tokenizer no se instala desde PHP, se instala desde apk
 RUN apk add --no-cache \
-    php82-tokenizer \
-    php82-iconv
+    php8.2-tokenizer \
+    php8.2-iconv
 
 # ============================================================
-# INSTALAR EXTENSIONES PHP DESDE FUENTES (EXCLUYENDO TOKENIZER)
+# INSTALAR EL RESTO DE EXTENSIONES DESDE FUENTE PHP
 # ============================================================
 
 RUN docker-php-ext-install -j$(nproc) \
@@ -59,7 +58,7 @@ RUN docker-php-ext-install -j$(nproc) \
     zip
 
 # ============================================================
-# INSTALAR MONGODB (DESDE PECL)
+# INSTALAR MONGODB
 # ============================================================
 
 RUN pecl install mongodb && docker-php-ext-enable mongodb
