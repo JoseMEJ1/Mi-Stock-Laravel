@@ -27,16 +27,17 @@ RUN apk add --no-cache \
     icu-dev \
     libxml2-dev \
     oniguruma-dev \
-    curl-dev
+    curl-dev \
+    libzip-dev
 
 # ============================================================
-# INSTALAR ZIP DESDE APK (NO DESDE PHP)
+# INSTALAR ZIP DESDE APK CON NOMBRE CORRECTO
 # ============================================================
 
-RUN apk add --no-cache php82-zip
+RUN apk add --no-cache php8.2-zip
 
 # ============================================================
-# INSTALAR EL RESTO DE EXTENSIONES DESDE PHP
+# INSTALAR EXTENSIONES (EXCLUYENDO ZIP)
 # ============================================================
 
 RUN docker-php-ext-install -j$(nproc) \
@@ -72,11 +73,39 @@ RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# ============================================================
+# CONFIGURAR DIRECTORIO
+# ============================================================
+
 WORKDIR /var/www
+
+# ============================================================
+# COPIAR ARCHIVOS DEL PROYECTO
+# ============================================================
+
 COPY . .
+
+# Verificar que composer.json existe
+RUN test -f composer.json || (echo "ERROR: composer.json not found" && exit 1)
+
+# Instalar dependencias
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
-RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# ============================================================
+# CONFIGURAR PERMISOS
+# ============================================================
+
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# ============================================================
+# EXPONER PUERTO
+# ============================================================
 
 EXPOSE 10000
+
+# ============================================================
+# COMANDO DE INICIO
+# ============================================================
+
 CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000"]
