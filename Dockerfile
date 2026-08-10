@@ -1,15 +1,38 @@
 FROM php:8.2-fpm-alpine
 
-# Instalar dependencias del sistema (con libiconv en lugar de libiconv-dev)
-RUN apk add --no-cache \
-    bash curl git unzip zip \
-    autoconf build-base g++ gcc libc-dev make \
-    openssl-dev pkgconfig libssl3 openssl \
-    freetype-dev libjpeg-turbo-dev libpng-dev libwebp-dev \
-    icu-dev libxml2-dev oniguruma-dev curl-dev \
-    libiconv
+# ============================================================
+# INSTALAR DEPENDENCIAS DEL SISTEMA (SIN LIBICONV)
+# ============================================================
 
-# Instalar todas las extensiones (iconv se instalará automáticamente)
+RUN apk add --no-cache \
+    bash \
+    curl \
+    git \
+    unzip \
+    zip \
+    autoconf \
+    build-base \
+    g++ \
+    gcc \
+    libc-dev \
+    make \
+    openssl-dev \
+    pkgconfig \
+    libssl3 \
+    openssl \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    libwebp-dev \
+    icu-dev \
+    libxml2-dev \
+    oniguruma-dev \
+    curl-dev
+
+# ============================================================
+# INSTALAR TODAS LAS EXTENSIONES PHP
+# ============================================================
+
 RUN docker-php-ext-install -j$(nproc) \
     bcmath \
     ctype \
@@ -28,17 +51,51 @@ RUN docker-php-ext-install -j$(nproc) \
     xmlwriter \
     zip
 
-# Instalar MongoDB
+# ============================================================
+# INSTALAR MONGODB
+# ============================================================
+
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 
-# Instalar Composer
+# ============================================================
+# INSTALAR COMPOSER
+# ============================================================
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# ============================================================
+# CONFIGURAR DIRECTORIO
+# ============================================================
+
 WORKDIR /var/www
+
+# ============================================================
+# COPIAR ARCHIVOS DEL PROYECTO
+# ============================================================
+
 COPY . .
+
+# Verificar que composer.json existe
+RUN test -f composer.json || (echo "ERROR: composer.json not found" && exit 1)
+
+# Instalar dependencias
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
-RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# ============================================================
+# CONFIGURAR PERMISOS
+# ============================================================
+
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# ============================================================
+# EXPONER PUERTO
+# ============================================================
 
 EXPOSE 10000
+
+# ============================================================
+# COMANDO DE INICIO
+# ============================================================
+
 CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000"]
