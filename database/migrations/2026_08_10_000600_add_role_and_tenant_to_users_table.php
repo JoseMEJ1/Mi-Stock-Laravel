@@ -10,11 +10,11 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             if (!Schema::hasColumn('users', 'role')) {
-                $table->string('role')->default('user')->after('api_token');
+                $table->string('role')->default('user');
             }
 
             if (!Schema::hasColumn('users', 'tenant_id')) {
-                $table->string('tenant_id')->nullable()->after('role');
+                $table->string('tenant_id')->nullable();
             }
         });
     }
