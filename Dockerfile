@@ -27,10 +27,12 @@ RUN apk add --no-cache \
     icu-dev \
     libxml2-dev \
     oniguruma-dev \
-    curl-dev
+    curl-dev \
+    # IMPORTANTE: Instalar libiconv para Alpine
+    libiconv-dev
 
 # ============================================================
-# INSTALAR EXTENSIONES PHP (UNA POR UNA CON LOGS)
+# INSTALAR EXTENSIONES PHP (EXCLUYENDO ICONV DEL GRUPO)
 # ============================================================
 
 RUN set -ex \
@@ -40,7 +42,6 @@ RUN set -ex \
     && docker-php-ext-install dom \
     && docker-php-ext-install fileinfo \
     && docker-php-ext-install filter \
-    && docker-php-ext-install iconv \
     && docker-php-ext-install mbstring \
     && docker-php-ext-install session \
     && docker-php-ext-install simplexml \
@@ -50,11 +51,19 @@ RUN set -ex \
     && docker-php-ext-install zip
 
 # ============================================================
+# INSTALAR ICONV POR SEPARADO CON CONFIGURACIÓN ESPECIAL
+# ============================================================
+
+RUN set -ex \
+    && apk add --no-cache libiconv-dev \
+    && docker-php-ext-configure iconv --with-iconv=/usr \
+    && docker-php-ext-install iconv
+
+# ============================================================
 # INSTALAR GD CON DEPENDENCIAS
 # ============================================================
 
 RUN set -ex \
-    && apk add --no-cache freetype-dev libjpeg-turbo-dev libpng-dev libwebp-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install gd
 
@@ -63,7 +72,6 @@ RUN set -ex \
 # ============================================================
 
 RUN set -ex \
-    && apk add --no-cache icu-dev \
     && docker-php-ext-install intl
 
 # ============================================================
@@ -71,7 +79,6 @@ RUN set -ex \
 # ============================================================
 
 RUN set -ex \
-    && apk add --no-cache openssl-dev \
     && pecl install mongodb \
     && docker-php-ext-enable mongodb
 
@@ -88,7 +95,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 # ============================================================
-# COPIAR ARCHIVOS Y VERIFICAR COMPOSER.JSON
+# COPIAR ARCHIVOS DEL PROYECTO
 # ============================================================
 
 COPY . .
@@ -96,11 +103,8 @@ COPY . .
 # Verificar que composer.json existe
 RUN test -f composer.json || (echo "ERROR: composer.json not found" && exit 1)
 
-# Mostrar contenido del directorio para debug
-RUN ls -la
-
-# Instalar dependencias con verbose
-RUN composer install --no-dev --optimize-autoloader --no-interaction --verbose
+# Instalar dependencias
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # ============================================================
 # CONFIGURAR PERMISOS
