@@ -1,7 +1,7 @@
 FROM php:8.2-fpm-alpine
 
 # ============================================================
-# PASO 1: INSTALAR DEPENDENCIAS DEL SISTEMA
+# INSTALAR DEPENDENCIAS DEL SISTEMA
 # ============================================================
 
 RUN apk add --no-cache \
@@ -27,87 +27,96 @@ RUN apk add --no-cache \
     icu-dev \
     libxml2-dev \
     oniguruma-dev \
-    curl-dev \
-    libcurl
+    curl-dev
 
 # ============================================================
-# PASO 2: INSTALAR EXTENSIONES PHP (GRUPOS)
+# INSTALAR EXTENSIONES PHP (UNA POR UNA CON LOGS)
 # ============================================================
 
-# Grupo 1: Extensiones básicas (siempre funcionan)
-RUN docker-php-ext-install -j$(nproc) \
-    bcmath \
-    ctype \
-    curl \
-    dom \
-    fileinfo \
-    filter
-
-# Grupo 2: Extensiones con dependencias (GD)
-RUN docker-php-ext-configure gd \
-    --with-freetype \
-    --with-jpeg \
-    --with-webp
-RUN docker-php-ext-install -j$(nproc) gd
-
-# Grupo 3: Extensiones restantes
-RUN docker-php-ext-install -j$(nproc) \
-    iconv \
-    intl \
-    mbstring \
-    session \
-    simplexml \
-    tokenizer \
-    xml \
-    xmlwriter \
-    zip
+RUN set -ex \
+    && docker-php-ext-install bcmath \
+    && docker-php-ext-install ctype \
+    && docker-php-ext-install curl \
+    && docker-php-ext-install dom \
+    && docker-php-ext-install fileinfo \
+    && docker-php-ext-install filter \
+    && docker-php-ext-install iconv \
+    && docker-php-ext-install mbstring \
+    && docker-php-ext-install session \
+    && docker-php-ext-install simplexml \
+    && docker-php-ext-install tokenizer \
+    && docker-php-ext-install xml \
+    && docker-php-ext-install xmlwriter \
+    && docker-php-ext-install zip
 
 # ============================================================
-# PASO 3: INSTALAR EXTENSIÓN MONGODB (REQUERIDA)
+# INSTALAR GD CON DEPENDENCIAS
 # ============================================================
 
-RUN pecl install mongodb \
+RUN set -ex \
+    && apk add --no-cache freetype-dev libjpeg-turbo-dev libpng-dev libwebp-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install gd
+
+# ============================================================
+# INSTALAR INTL
+# ============================================================
+
+RUN set -ex \
+    && apk add --no-cache icu-dev \
+    && docker-php-ext-install intl
+
+# ============================================================
+# INSTALAR MONGODB
+# ============================================================
+
+RUN set -ex \
+    && apk add --no-cache openssl-dev \
+    && pecl install mongodb \
     && docker-php-ext-enable mongodb
 
 # ============================================================
-# PASO 4: INSTALAR COMPOSER
+# INSTALAR COMPOSER
 # ============================================================
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # ============================================================
-# PASO 5: CONFIGURAR DIRECTORIO DE TRABAJO
+# CONFIGURAR DIRECTORIO
 # ============================================================
 
 WORKDIR /var/www
 
 # ============================================================
-# PASO 6: COPIAR ARCHIVOS DEL PROYECTO
+# COPIAR ARCHIVOS Y VERIFICAR COMPOSER.JSON
 # ============================================================
 
 COPY . .
 
-# ============================================================
-# PASO 7: INSTALAR DEPENDENCIAS DE LARAVEL
-# ============================================================
+# Verificar que composer.json existe
+RUN test -f composer.json || (echo "ERROR: composer.json not found" && exit 1)
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Mostrar contenido del directorio para debug
+RUN ls -la
 
-# ============================================================
-# PASO 8: CONFIGURAR PERMISOS
-# ============================================================
-
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
-RUN chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+# Instalar dependencias con verbose
+RUN composer install --no-dev --optimize-autoloader --no-interaction --verbose
 
 # ============================================================
-# PASO 9: EXPONER PUERTO
+# CONFIGURAR PERMISOS
+# ============================================================
+
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# ============================================================
+# EXPONER PUERTO
 # ============================================================
 
 EXPOSE 10000
 
 # ============================================================
-# PASO 10: COMANDO DE INICIO
+# COMANDO DE INICIO
 # ============================================================
 
 CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000"]
