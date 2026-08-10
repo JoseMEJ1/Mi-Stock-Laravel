@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  soketi:
+    image: 'quay.io/soketi/soketi:latest-16-alpine'
+    environment:
+      SOKETI_DEBUG: '1'
+      SOKETI_DEFAULT_APP_ID: local
+      SOKETI_DEFAULT_APP_KEY: local
+      SOKETI_DEFAULT_APP_SECRET: local
+      SOKETI_DEFAULT_APP_ENABLE_CLIENT_MESSAGES: 'true'
+      SOKETI_DEFAULT_APP_ENABLED: 'true'
+    ports:
+      - '6001:6001'
+      - '6002:6002'
