@@ -23,7 +23,9 @@ RUN apk add --no-cache \
     libwebp-dev \
     icu-dev \
     libxml2-dev \
-    oniguruma-dev
+    oniguruma-dev \
+    curl-dev \
+    libcurl
 
 # Instalar extensiones PHP
 RUN docker-php-ext-install -j$(nproc) \
