@@ -10,7 +10,7 @@ class Client extends Eloquent
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name','email','phone','address','tax_id'];
+    protected $fillable = ['name','email','phone','address','tax_id','tenant_id'];
 
     public function sales()
     {

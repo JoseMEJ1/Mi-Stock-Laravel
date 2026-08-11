@@ -10,7 +10,7 @@ class Supplier extends Eloquent
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name','code','email','phone','address','notes'];
+    protected $fillable = ['name','code','email','phone','address','notes','tenant_id'];
 
     public function products()
     {

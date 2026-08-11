@@ -3,6 +3,8 @@
 namespace App\Listeners;
 
 use App\Events\ProductStockUpdated;
+use App\Models\Branch;
+use App\Models\Product;
 use Illuminate\Support\Facades\Log;
 use App\Models\LogEntry;
 
@@ -20,8 +22,22 @@ class SendLowStockNotification
                 Log::info($message);
 
                 if (class_exists(LogEntry::class)) {
+                    $tenantId = null;
+                    $product = Product::find($event->productId);
+                    if ($product && !empty($product->tenant_id)) {
+                        $tenantId = (string) $product->tenant_id;
+                    }
+
+                    if (!$tenantId && $event->branchId) {
+                        $branch = Branch::find($event->branchId);
+                        if ($branch && !empty($branch->tenant_id)) {
+                            $tenantId = (string) $branch->tenant_id;
+                        }
+                    }
+
                     LogEntry::create([
                         'user_id' => null,
+                        'tenant_id' => $tenantId,
                         'action' => 'notification.low_stock',
                         'auditable_type' => 'product',
                         'auditable_id' => $event->productId,

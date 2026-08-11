@@ -87,11 +87,25 @@ abstract class ApiController extends Controller
     {
         LogEntry::create([
             'user_id' => $user->getKey(),
+            'tenant_id' => $this->tenantIdFromUser($user),
             'action' => $action,
             'auditable_type' => $auditable ? get_class($auditable) : null,
             'auditable_id' => $auditable ? $auditable->getKey() : null,
             'data' => $data,
         ]);
+    }
+
+    protected function tenantIdFromUser(?User $user): ?string
+    {
+        if (!$user) {
+            return null;
+        }
+
+        if (!empty($user->tenant_id)) {
+            return (string) $user->tenant_id;
+        }
+
+        return (string) $user->getKey();
     }
 
     protected function generateToken(): string

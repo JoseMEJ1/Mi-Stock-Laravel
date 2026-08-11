@@ -9,7 +9,7 @@ class StockMovement extends Eloquent
 {
     use HasFactory;
 
-    protected $fillable = ['product_id','branch_id','user_id','movement_type','quantity','cost','reference','note'];
+    protected $fillable = ['product_id','branch_id','user_id','tenant_id','movement_type','quantity','cost','reference','note'];
 
     public function product()
     {

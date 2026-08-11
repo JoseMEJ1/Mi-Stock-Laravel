@@ -9,15 +9,19 @@ use Illuminate\Http\Request;
 class StockMovementController extends CrudController
 {
     protected string $modelClass = StockMovement::class;
+    protected bool $tenantScoped = true;
 
-    public function store(Request $request)
+    public function store(StoreStockMovementRequest $request)
     {
         $user = $this->authorize($request);
         if ($user instanceof \Illuminate\Http\JsonResponse) {
             return $user;
         }
 
-        $movement = StockMovement::create(array_merge($request->validated(), ['user_id' => $user->getKey()]));
+        $movement = StockMovement::create(array_merge($request->validated(), [
+            'user_id' => $user->getKey(),
+            'tenant_id' => $this->tenantIdFromUser($user),
+        ]));
         $this->logAction($user, 'created stock movement', $movement, $movement->toArray());
 
         // dispatch product stock updated event (listeners will adjust ProductBranch stock)

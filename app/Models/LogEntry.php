@@ -11,7 +11,7 @@ class LogEntry extends Eloquent
 
     protected $table = 'logs';
 
-    protected $fillable = ['user_id','action','auditable_type','auditable_id','data'];
+    protected $fillable = ['user_id','tenant_id','action','auditable_type','auditable_id','data'];
 
     protected $casts = [
         'data' => 'array',

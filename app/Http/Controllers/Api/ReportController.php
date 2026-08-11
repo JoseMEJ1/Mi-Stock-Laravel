@@ -11,9 +11,18 @@ class ReportController extends ApiController
 {
     public function salesSummary(Request $request)
     {
-        $this->authorize($request);
+        $user = $this->authorize($request);
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
 
         $query = Sale::query();
+        $tenantId = $this->tenantIdFromUser($user);
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $query->where('tenant_id', '__no_tenant__');
+        }
         if ($request->filled('from')) {
             $query->where('sold_at', '>=', $request->input('from'));
         }
@@ -33,9 +42,18 @@ class ReportController extends ApiController
 
     public function purchaseSummary(Request $request)
     {
-        $this->authorize($request);
+        $user = $this->authorize($request);
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
 
         $query = Purchase::query();
+        $tenantId = $this->tenantIdFromUser($user);
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $query->where('tenant_id', '__no_tenant__');
+        }
         if ($request->filled('from')) {
             $query->where('purchased_at', '>=', $request->input('from'));
         }
@@ -55,9 +73,18 @@ class ReportController extends ApiController
 
     public function inventorySummary(Request $request)
     {
-        $this->authorize($request);
+        $user = $this->authorize($request);
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
 
         $query = ProductBranch::query();
+        $tenantId = $this->tenantIdFromUser($user);
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        } else {
+            $query->where('tenant_id', '__no_tenant__');
+        }
         if ($request->filled('branch_id')) {
             $query->where('branch_id', $request->input('branch_id'));
         }

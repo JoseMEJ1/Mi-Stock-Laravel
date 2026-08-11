@@ -9,7 +9,7 @@ class PurchaseItem extends Eloquent
 {
     use HasFactory;
 
-    protected $fillable = ['purchase_id','product_id','quantity','cost','total'];
+    protected $fillable = ['purchase_id','product_id','tenant_id','quantity','cost','total'];
 
     public function purchase()
     {

@@ -9,15 +9,16 @@ use Illuminate\Http\Request;
 class BranchController extends CrudController
 {
     protected string $modelClass = Branch::class;
+    protected bool $tenantScoped = true;
 
-    public function store(Request $request)
+    public function store(StoreBranchRequest $request)
     {
         $user = $this->authorize($request);
         if ($user instanceof \Illuminate\Http\JsonResponse) {
             return $user;
         }
 
-        $branch = Branch::create($request->validated());
+        $branch = Branch::create($this->tenantPayload($request, $request->validated()));
         $this->logAction($user, 'created branch', $branch, $branch->toArray());
         $this->broadcastModelChange($branch, 'created');
 
@@ -36,7 +37,13 @@ class BranchController extends CrudController
             return $this->error('Branch not found.', 404);
         }
 
-        $branch->fill($request->validated());
+        $branch->fill($this->tenantPayload($request, $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'code' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'is_main' => ['nullable', 'boolean'],
+        ])));
         $branch->save();
         $this->logAction($user, 'updated branch', $branch, $branch->toArray());
         $this->broadcastModelChange($branch, 'updated');

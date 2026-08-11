@@ -9,7 +9,7 @@ class InventorySnapshot extends Eloquent
 {
     use HasFactory;
 
-    protected $fillable = ['branch_id','taken_by','snapshot_at','data'];
+    protected $fillable = ['branch_id','taken_by','tenant_id','snapshot_at','data'];
 
     protected $casts = [
         'data' => 'array',

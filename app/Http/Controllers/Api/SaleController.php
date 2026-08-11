@@ -11,8 +11,9 @@ use Illuminate\Http\Request;
 class SaleController extends CrudController
 {
     protected string $modelClass = Sale::class;
+    protected bool $tenantScoped = true;
 
-    public function store(Request $request)
+    public function store(StoreSaleRequest $request)
     {
         $user = $this->authorize($request);
         if ($user instanceof \Illuminate\Http\JsonResponse) {
@@ -25,12 +26,17 @@ class SaleController extends CrudController
 
         $data['total'] = collect($items)->sum(fn ($item) => $item['quantity'] * $item['price']);
         $data['user_id'] = $user->getKey();
+        $data['tenant_id'] = $this->tenantIdFromUser($user);
         $data['sold_at'] = $data['sold_at'] ?? now();
 
         $sale = Sale::create($data);
 
         foreach ($items as $item) {
-            SaleItem::create(array_merge($item, ['sale_id' => $sale->getKey(), 'total' => $item['quantity'] * $item['price']]));
+            SaleItem::create(array_merge($item, [
+                'sale_id' => $sale->getKey(),
+                'tenant_id' => $data['tenant_id'],
+                'total' => $item['quantity'] * $item['price'],
+            ]));
             if (!empty($data['branch_id'])) {
                 // delegate stock decrement to event listeners
                 try {
@@ -62,12 +68,22 @@ class SaleController extends CrudController
             return $user;
         }
 
-        $sale = Sale::find($id);
+        $sale = $this->tenantQuery($request)->find($id);
         if (!$sale) {
             return $this->error('Sale not found.', 404);
         }
 
-        $data = $request->validated();
+        $data = $request->validate([
+            'reference' => ['nullable', 'string', 'max:255'],
+            'client_id' => ['nullable', 'string'],
+            'branch_id' => ['nullable', 'string'],
+            'sold_at' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'max:50'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'string'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.price' => ['required', 'numeric', 'min:0'],
+        ]);
         $items = $data['items'];
         unset($data['items']);
 
@@ -93,7 +109,7 @@ class SaleController extends CrudController
             return $user;
         }
 
-        $sale = Sale::find($id);
+        $sale = $this->tenantQuery($request)->find($id);
         if (!$sale) {
             return $this->error('Sale not found.', 404);
         }

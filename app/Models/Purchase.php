@@ -9,7 +9,7 @@ class Purchase extends Eloquent
 {
     use HasFactory;
 
-    protected $fillable = ['reference','supplier_id','branch_id','user_id','total','status','purchased_at'];
+    protected $fillable = ['reference','supplier_id','branch_id','user_id','tenant_id','total','status','purchased_at'];
 
     protected $dates = ['purchased_at'];
 

@@ -9,15 +9,19 @@ use Illuminate\Http\Request;
 class InventorySnapshotController extends CrudController
 {
     protected string $modelClass = InventorySnapshot::class;
+    protected bool $tenantScoped = true;
 
-    public function store(Request $request)
+    public function store(StoreInventorySnapshotRequest $request)
     {
         $user = $this->authorize($request);
         if ($user instanceof \Illuminate\Http\JsonResponse) {
             return $user;
         }
 
-        $snapshot = InventorySnapshot::create(array_merge($request->validated(), ['taken_by' => $user->getKey()]));
+        $snapshot = InventorySnapshot::create(array_merge($request->validated(), [
+            'taken_by' => $user->getKey(),
+            'tenant_id' => $this->tenantIdFromUser($user),
+        ]));
         $this->logAction($user, 'created inventory snapshot', $snapshot, $snapshot->toArray());
         $this->broadcastModelChange($snapshot, 'created');
 

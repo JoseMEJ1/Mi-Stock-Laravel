@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 class ProductController extends CrudController
 {
     protected string $modelClass = Product::class;
+    protected bool $tenantScoped = true;
 
     public function index(Request $request)
     {
@@ -20,10 +21,11 @@ class ProductController extends CrudController
 
         $query = Product::query()->with(['category', 'branches']);
 
-        if (!empty($user->tenant_id)) {
-            $query->where('tenant_id', (string) $user->tenant_id);
+        $tenantId = $this->tenantIdFromUser($user);
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
         } else {
-            $query->whereRaw('1 = 0');
+            $query->where('tenant_id', '__no_tenant__');
         }
 
         $items = $query->get()->map(function (Product $product) {
@@ -48,7 +50,7 @@ class ProductController extends CrudController
         }
 
         $payload = $request->validated();
-        $payload['tenant_id'] = $user->tenant_id ?? null;
+        $payload['tenant_id'] = $this->tenantIdFromUser($user);
         $product = Product::create($payload);
         $this->logAction($user, 'created product', $product, $product->toArray());
 
@@ -77,8 +79,9 @@ class ProductController extends CrudController
         }
 
         $payload = method_exists($request, 'validated') ? $request->validated() : $request->all();
-        if (!empty($user->tenant_id)) {
-            $payload['tenant_id'] = $user->tenant_id;
+        $tenantId = $this->tenantIdFromUser($user);
+        if ($tenantId) {
+            $payload['tenant_id'] = $tenantId;
         }
         $product->fill($payload);
         $product->save();

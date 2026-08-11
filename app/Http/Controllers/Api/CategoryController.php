@@ -9,15 +9,16 @@ use Illuminate\Http\Request;
 class CategoryController extends CrudController
 {
     protected string $modelClass = Category::class;
+    protected bool $tenantScoped = true;
 
-    public function store(Request $request)
+    public function store(StoreCategoryRequest $request)
     {
         $user = $this->authorize($request);
         if ($user instanceof \Illuminate\Http\JsonResponse) {
             return $user;
         }
 
-        $category = Category::create($request->validated());
+        $category = Category::create($this->tenantPayload($request, $request->validated()));
         $this->logAction($user, 'created category', $category, $category->toArray());
         $this->broadcastModelChange($category, 'created');
 
@@ -36,7 +37,12 @@ class CategoryController extends CrudController
             return $this->error('Category not found.', 404);
         }
 
-        $category->fill($request->validated());
+        $category->fill($this->tenantPayload($request, $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255'],
+            'parent_id' => ['nullable', 'string'],
+            'description' => ['nullable', 'string'],
+        ])));
         $category->save();
         $this->logAction($user, 'updated category', $category, $category->toArray());
         $this->broadcastModelChange($category, 'updated');

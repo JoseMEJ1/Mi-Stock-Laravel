@@ -10,7 +10,7 @@ class Branch extends Eloquent
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name','code','address','phone','is_main'];
+    protected $fillable = ['name','code','address','phone','is_main','tenant_id'];
 
     public function products()
     {

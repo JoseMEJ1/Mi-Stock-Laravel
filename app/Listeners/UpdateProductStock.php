@@ -21,14 +21,30 @@ class UpdateProductStock
                 return;
             }
 
+            $tenantId = null;
+            $product = Product::find($productId);
+            if ($product && !empty($product->tenant_id)) {
+                $tenantId = (string) $product->tenant_id;
+            } elseif ($branchId) {
+                $branch = \App\Models\Branch::find($branchId);
+                if ($branch && !empty($branch->tenant_id)) {
+                    $tenantId = (string) $branch->tenant_id;
+                }
+            }
+
             // Ensure ProductBranch exists and update stock safely
             $pb = ProductBranch::firstOrCreate([
                 'product_id' => $productId,
                 'branch_id' => $branchId,
+                'tenant_id' => $tenantId,
             ], [
                 'stock' => 0,
                 'reserved' => 0,
             ]);
+
+            if (empty($pb->tenant_id) && $tenantId) {
+                $pb->tenant_id = $tenantId;
+            }
 
             $current = (float) ($pb->stock ?? 0);
             $new = $current + $quantity;

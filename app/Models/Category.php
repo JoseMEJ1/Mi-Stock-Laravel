@@ -10,7 +10,7 @@ class Category extends Eloquent
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name','slug','parent_id','description'];
+    protected $fillable = ['name','slug','parent_id','description','tenant_id'];
 
     public function parent()
     {

@@ -9,7 +9,7 @@ class Sale extends Eloquent
 {
     use HasFactory;
 
-    protected $fillable = ['reference','client_id','branch_id','user_id','total','status','sold_at'];
+    protected $fillable = ['reference','client_id','branch_id','user_id','tenant_id','total','status','sold_at'];
 
     protected $dates = ['sold_at'];
 

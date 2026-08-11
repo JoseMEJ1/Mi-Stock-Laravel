@@ -11,7 +11,7 @@ class ProductBranch extends Eloquent
 
     protected $table = 'product_branch';
 
-    protected $fillable = ['product_id','branch_id','stock','reserved'];
+    protected $fillable = ['product_id','branch_id','tenant_id','stock','reserved'];
 
     public function product()
     {

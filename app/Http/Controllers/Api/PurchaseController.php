@@ -11,8 +11,9 @@ use Illuminate\Http\Request;
 class PurchaseController extends CrudController
 {
     protected string $modelClass = Purchase::class;
+    protected bool $tenantScoped = true;
 
-    public function store(Request $request)
+    public function store(StorePurchaseRequest $request)
     {
         $user = $this->authorize($request);
         if ($user instanceof \Illuminate\Http\JsonResponse) {
@@ -25,12 +26,17 @@ class PurchaseController extends CrudController
 
         $data['total'] = collect($items)->sum(fn ($item) => $item['quantity'] * $item['cost']);
         $data['user_id'] = $user->getKey();
+        $data['tenant_id'] = $this->tenantIdFromUser($user);
         $data['purchased_at'] = $data['purchased_at'] ?? now();
 
         $purchase = Purchase::create($data);
 
         foreach ($items as $item) {
-            $purchaseItem = PurchaseItem::create(array_merge($item, ['purchase_id' => $purchase->getKey(), 'total' => $item['quantity'] * $item['cost']]));
+            $purchaseItem = PurchaseItem::create(array_merge($item, [
+                'purchase_id' => $purchase->getKey(),
+                'tenant_id' => $data['tenant_id'],
+                'total' => $item['quantity'] * $item['cost'],
+            ]));
             if (!empty($data['branch_id'])) {
                 // delegate stock update to event listeners
                 try {
@@ -54,12 +60,22 @@ class PurchaseController extends CrudController
             return $user;
         }
 
-        $purchase = Purchase::find($id);
+        $purchase = $this->tenantQuery($request)->find($id);
         if (!$purchase) {
             return $this->error('Purchase not found.', 404);
         }
 
-        $data = $request->validated();
+        $data = $request->validate([
+            'reference' => ['nullable', 'string', 'max:255'],
+            'supplier_id' => ['nullable', 'string'],
+            'branch_id' => ['nullable', 'string'],
+            'purchased_at' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'max:50'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'string'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.cost' => ['required', 'numeric', 'min:0'],
+        ]);
         $items = $data['items'];
         unset($data['items']);
 
@@ -85,7 +101,7 @@ class PurchaseController extends CrudController
             return $user;
         }
 
-        $purchase = Purchase::find($id);
+        $purchase = $this->tenantQuery($request)->find($id);
         if (!$purchase) {
             return $this->error('Purchase not found.', 404);
         }
