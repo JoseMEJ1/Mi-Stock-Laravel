@@ -80,9 +80,16 @@ El token se obtiene en los endpoints de autenticación.
   "name": "Juan Pérez",
   "email": "juan@example.com",
   "password": "12345678",
-  "password_confirmation": "12345678"
+  "password_confirmation": "12345678",
+  "business_name": "Mi Negocio SA de CV",
+  "rfc": "XAXX010101000",
+  "plan_id": "<license-plan-id>",
+  "period": "monthly",
+  "payment_method": "card"
 }
 ```
+
+Al enviar los datos de licencia en el registro, la API crea también el tenant, la suscripción y la factura inicial de la licencia.
 
 ### Ejemplo de login
 
@@ -232,6 +239,11 @@ Campos permitidos:
   "description": "Crear productos"
 }
 ```
+
+### 5.9 Licencias públicas
+
+- `GET /api/v1/licenses/public/plans`
+- `GET /api/v1/licenses/public/payment-methods`
 
 ## 6. Operaciones de negocio
 

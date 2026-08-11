@@ -10,7 +10,7 @@ class Product extends Eloquent
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['sku','name','description','category_id','supplier_id','cost','price','unit','barcode'];
+    protected $fillable = ['sku','name','description','category_id','supplier_id','tenant_id','cost','price','unit','barcode'];
 
     public function category()
     {

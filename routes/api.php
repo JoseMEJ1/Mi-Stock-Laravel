@@ -51,6 +51,9 @@ Route::get('reports/purchases', [ReportController::class, 'purchaseSummary']);
 Route::get('reports/inventory', [ReportController::class, 'inventorySummary']);
 
 Route::prefix('v1/licenses')->group(function () {
+    Route::get('public/plans', [LicensePlanController::class, 'publicIndex']);
+    Route::get('public/payment-methods', [LicensePaymentMethodController::class, 'publicIndex']);
+
     Route::apiResource('plans', LicensePlanController::class)->only(['index', 'store', 'show', 'update']);
     Route::patch('plans/{id}/status', [LicensePlanController::class, 'status']);
 

@@ -10,6 +10,23 @@ use Illuminate\Http\Request;
 
 class LicensePaymentMethodController extends ApiController
 {
+    public function publicIndex()
+    {
+        $methods = LicensePaymentMethod::firstOrCreate([
+            'key' => 'default',
+        ], [
+            'methods' => [
+                'card' => ['enabled' => true, 'commission' => 2.5],
+                'bank_transfer' => ['enabled' => true, 'commission' => 0],
+                'paypal' => ['enabled' => true, 'commission' => 3.5],
+                'oxxo' => ['enabled' => true, 'commission' => 5.0],
+                'invoice' => ['enabled' => true, 'commission' => 0],
+            ],
+        ]);
+
+        return $this->success(['methods' => $methods->methods]);
+    }
+
     public function index(Request $request)
     {
         $user = $this->authorizeAdmin($request);

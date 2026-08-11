@@ -15,6 +15,24 @@ class LicensePlanController extends ApiController
 {
     protected string $modelClass = LicensePlan::class;
 
+    public function publicIndex(Request $request)
+    {
+        $query = LicensePlan::query()->where('status', 'active');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        return $this->success([
+            'items' => $query->orderBy('name')->get(),
+        ]);
+    }
+
     public function index(Request $request)
     {
         $user = $this->authorizeAdmin($request);
