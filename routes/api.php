@@ -44,13 +44,18 @@ Route::apiResource('products', ProductController::class);
 Route::apiResource('users', UserController::class)->only(['index','show','store','update','destroy']);
 Route::apiResource('purchases', PurchaseController::class)->only(['index','show','store','update','destroy']);
 Route::apiResource('sales', SaleController::class)->only(['index','show','store','update','destroy']);
-Route::apiResource('stock-movements', StockMovementController::class)->only(['index','show','store']);
+Route::apiResource('stock-movements', StockMovementController::class)->only(['index','show','store','update','destroy']);
 Route::apiResource('inventory-snapshots', InventorySnapshotController::class)->only(['index','show','store']);
 Route::apiResource('logs', LogEntryController::class)->only(['index','show']);
 
 Route::get('reports/sales', [ReportController::class, 'salesSummary']);
 Route::get('reports/purchases', [ReportController::class, 'purchaseSummary']);
 Route::get('reports/inventory', [ReportController::class, 'inventorySummary']);
+Route::get('reports/sales/pdf', [ReportController::class, 'salesPdf']);
+Route::get('reports/purchases/pdf', [ReportController::class, 'purchasesPdf']);
+Route::get('reports/inventory/pdf', [ReportController::class, 'inventoryPdf']);
+Route::get('reports/movements/pdf', [ReportController::class, 'movementsPdf']);
+Route::get('logs/export/pdf', [ReportController::class, 'logsPdf']);
 
 Route::prefix('v1/licenses')->group(function () {
     Route::get('public/plans', [LicensePlanController::class, 'publicIndex']);

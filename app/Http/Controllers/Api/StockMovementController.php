@@ -41,4 +41,55 @@ class StockMovementController extends CrudController
 
         return $this->success($movement, 'Stock movement created.', 201);
     }
+
+    public function update(Request $request, $id)
+    {
+        $user = $this->authorize($request);
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
+
+        $movement = $this->tenantQuery($request)->find($id);
+        if (!$movement) {
+            return $this->error('Stock movement not found.', 404);
+        }
+
+        $data = $request->validate([
+            'product_id' => ['required', 'string'],
+            'branch_id' => ['nullable', 'string'],
+            'movement_type' => ['required', 'string', 'in:in,out,adjustment,transfer'],
+            'quantity' => ['required', 'integer', 'min:1'],
+            'cost' => ['nullable', 'numeric', 'min:0'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'note' => ['nullable', 'string'],
+        ]);
+
+        $data['tenant_id'] = $this->tenantIdFromUser($user);
+        $data['user_id'] = $user->getKey();
+        $movement->fill($data);
+        $movement->save();
+        $this->logAction($user, 'updated stock movement', $movement, $movement->toArray());
+        $this->broadcastModelChange($movement, 'updated');
+
+        return $this->success($movement, 'Stock movement updated.');
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $user = $this->authorize($request);
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
+
+        $movement = $this->tenantQuery($request)->find($id);
+        if (!$movement) {
+            return $this->error('Stock movement not found.', 404);
+        }
+
+        $payload = $movement->toArray();
+        $movement->delete();
+        $this->broadcastResourceChange($this->resourceNameFromInstance($movement), 'deleted', $payload);
+
+        return $this->success(null, 'Stock movement deleted.');
+    }
 }

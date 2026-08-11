@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             InventorySnapshotsSeeder::class,
             LogsSeeder::class,
             \Database\Seeders\DemoWeekSeeder::class,
+            ManuelMonthSeeder::class,
         ]);
     }
 }

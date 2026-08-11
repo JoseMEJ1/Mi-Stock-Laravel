@@ -73,12 +73,22 @@ class ProductController extends CrudController
             return $user;
         }
 
-        $product = Product::find($id);
+        $product = $this->tenantQuery($request)->find($id);
         if (!$product) {
             return $this->error('Product not found.', 404);
         }
 
-        $payload = method_exists($request, 'validated') ? $request->validated() : $request->all();
+        $payload = $request->validate([
+            'sku' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'category_id' => ['nullable', 'string'],
+            'supplier_id' => ['nullable', 'string'],
+            'cost' => ['nullable', 'numeric', 'min:0'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'unit' => ['nullable', 'string', 'max:50'],
+            'barcode' => ['nullable', 'string', 'max:255'],
+        ]);
         $tenantId = $this->tenantIdFromUser($user);
         if ($tenantId) {
             $payload['tenant_id'] = $tenantId;
