@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             if (!Schema::hasColumn('products', 'tenant_id')) {
-                $table->string('tenant_id')->nullable()->after('supplier_id');
+                $table->string('tenant_id')->nullable();
             }
         });
     }
